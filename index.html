@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud MilkTea Store - Đám Mây Trà Sữa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --secondary: #EBF3FB;
+            --accent: #FF6B6B;
+            --dark: #2C3E50;
+            --light: #F8FBFF;
+            --gray: #7F8C8D;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Quicksand', sans-serif; }
+        body { background-color: var(--light); color: var(--dark); line-height: 1.6; }
+        header { background: linear-gradient(135deg, var(--primary), #357ABD); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2); }
+        header h1 { font-size: 24px; font-weight: 700; }
+        .nav-btns button { background: white; color: var(--primary); border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; cursor: pointer; margin-left: 10px; transition: 0.3s; }
+        .nav-btns button:hover { background: var(--secondary); }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        @media(max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        .section-title { font-size: 20px; margin-bottom: 20px; color: var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 8px; font-weight: 700; }
+        .categories { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .cat-btn { background: white; border: 1px solid var(--primary); color: var(--primary); padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 600; white-space: nowrap; transition: 0.2s; }
+        .cat-btn.active, .cat-btn:hover { background: var(--primary); color: white; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .product-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; transition: 0.2s; }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(74, 144, 226, 0.15); }
+        .product-card h3 { font-size: 15px; margin-bottom: 8px; color: var(--dark); }
+        .product-card .price { color: var(--accent); font-weight: 700; margin-bottom: 10px; font-size: 16px; }
+        .product-card button { background: var(--primary); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .product-card button:hover { background: #357ABD; }
+        .sidebar { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); height: fit-content; }
+        .cart-items { max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .cart-item button { background: none; border: none; color: var(--accent); cursor: pointer; font-weight: bold; }
+        .total-box { font-size: 18px; font-weight: 700; display: flex; justify-content: space-between; margin-bottom: 15px; border-top: 2px dashed #eee; padding-top: 15px; }
+        .checkout-btn { width: 100%; background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .checkout-btn:hover { background: #ff5252; }
+        .db-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+        .db-content { background: white; padding: 30px; border-radius: 12px; width: 80%; max-height: 80vh; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+        th { background: var(--secondary); color: var(--dark); }
+        .close-db { background: var(--gray); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🥤 Cloud MilkTea (Web Bán Trà Sữa)</h1>
+        <div class="nav-btns">
+            <button onclick="openDatabaseModal()">📁 Xem Cơ Sở Dữ Liệu (DB)</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Danh sách sản phẩm -->
+        <main>
+            <h2 class="section-title">Danh Sách Thực Đơn (30 Món Trà Sữa)</h2>
+            <div class="categories" id="categoryList">
+                <button class="cat-btn active" onclick="filterCategory('all')">Tất cả</button>
+                <button class="cat-btn" onclick="filterCategory('Truyền Thống')">Trà Sữa Truyền Thống</button>
+                <button class="cat-btn" onclick="filterCategory('Oreo')">Trà Sữa Oreo</button>
+                <button class="cat-btn" onclick="filterCategory('Kem Cheese')">Trà Sữa Kem Cheese</button>
+                <button class="cat-btn" onclick="filterCategory('Hồng Trà')">Hồng Trà</button>
+                <button class="cat-btn" onclick="filterCategory('Trái Cây')">Trà Trái Cây</button>
+            </div>
+            <div class="product-grid" id="productGrid"></div>
+        </main>
+
+        <!-- Giỏ hàng & Thanh toán -->
+        <aside class="sidebar">
+            <h2 class="section-title" style="font-size: 18px;">🛒 Giỏ Hàng Của Bạn</h2>
+            <div class="cart-items" id="cartItems">
+                <p style="color: var(--gray); text-align: center; font-size: 14px;">Chưa có sản phẩm nào trong giỏ.</p>
+            </div>
+            <div class="total-box">
+                <span>Tổng tiền:</span>
+                <span id="totalPrice" style="color: var(--accent);">0 đ</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">Thanh Toán Ngay</button>
+        </aside>
+    </div>
+
+    <!-- Modal hiển thị Cơ sở dữ liệu (Database Backend Simulation) -->
+    <div class="db-modal" id="dbModal">
+        <div class="db-content">
+            <h3>📊 Mô Phỏng Cơ Sở Dữ Liệu Trà Sữa (Cloud Database)</h3>
+            <p style="font-size: 13px; color: var(--gray); margin-bottom: 10px;">Dưới đây là bảng dữ liệu sản phẩm (Products Table) được lưu trữ sẵn trong hệ thống:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên Món Trà Sữa</th>
+                        <th>Loại</th>
+                        <th>Giá Tiền (VNĐ)</th>
+                    </tr>
+                </thead>
+                <tbody id="dbTableBody"></tbody>
+            </table>
+            <button class="close-db" onclick="closeDatabaseModal()">Đóng Cửa Sổ</button>
+        </div>
+    </div>
+
+    <script>
+        // Database mô phỏng 30 món trà sữa
+        const databaseProducts = [
+            { id: 1, name: "Trà Sữa Truyền Thống Size S", category: "Truyền Thống", price: 25000 },
+            { id: 2, name: "Trà Sữa Truyền Thống Size M", category: "Truyền Thống", price: 30000 },
+            { id: 3, name: "Trà Sữa Truyền Thống Size L", category: "Truyền Thống", price: 35000 },
+            { id: 4, name: "Trà Sữa Trân Châu Hoàng Gia", category: "Truyền Thống", price: 35000 },
+            { id: 5, name: "Trà Sữa Pudding Chocolate", category: "Truyền Thống", price: 38000 },
+            { id: 6, name: "Trà Sữa Matcha Azuki", category: "Truyền Thống", price: 40000 },
+            { id: 7, name: "Trà Sữa Khoai Môn Tươi", category: "Truyền Thống", price: 38000 },
+            { id: 8, name: "Trà Sữa Hạnh Nhân Đác", category: "Truyền Thống", price: 42000 },
+            { id: 9, name: "Trà Sữa Đào Hồng", category: "Truyền Thống", price: 35000 },
+            { id: 10, name: "Trà Sữa Ovaltine Trân Châu", category: "Truyền Thống", price: 40000 },
+            
+            { id: 11, name: "Trà Sữa Oreo Xay Nguyên Bản", category: "Oreo", price: 42000 },
+            { id: 12, name: "Trà Sữa Oreo Kem Phô Mai", category: "Oreo", price: 45000 },
+            { id: 13, name: "Trà Sữa Oreo Matcha", category: "Oreo", price: 45000 },
+            { id: 14, name: "Trà Sữa Oreo Chocolate Đá Xay", category: "Oreo", price: 48000 },
+            { id: 15, name: "Trà Sữa Oreo Bạc Hà", category: "Oreo", price: 42000 },
+            { id: 16, name: "Trà Sữa Oreo Khoai Môn", category: "Oreo", price: 45000 },
+            { id: 17, name: "Trà Sữa Oreo Pudding Trứng", category: "Oreo", price: 46000 },
+
+            { id: 18, name: "Trà Sữa Kem Cheese Macchiato", category: "Kem Cheese", price: 45000 },
+            { id: 19, name: "Hồng Trà Kem Cheese Đặc Biệt", category: "Kem Cheese", price: 42000 },
+            { id: 20, name: "Trà Ô Long Kem Cheese Mặn", category: "Kem Cheese", price: 45000 },
+            { id: 21, name: "Trà Xanh Hoa Nhài Kem Cheese", category: "Kem Cheese", price: 40000 },
+            { id: 22, name: "Trà Sữa Socola Kem Cheese", category: "Kem Cheese", price: 48000 },
+
+            { id: 23, name: "Hồng Trà Nguyên Bản", category: "Hồng Trà", price: 22000 },
+            { id: 24, name: "Hồng Trà Chanh Mật Ong", category: "Hồng Trà", price: 28000 },
+            { id: 25, name: "Hồng Trà Đào Sả Tươi", category: "Hồng Trà", price: 32000 },
+            { id: 26, name: "Hồng Trà Vải Thiều", category: "Hồng Trà", price: 32000 },
+
+            { id: 27, name: "Trà Sữa Xoài Tươi Đác Rim", category: "Trái Cây", price: 38000 },
+            { id: 28, name: "Trà Sữa Dâu Tây Hàn Quốc", category: "Trái Cây", price: 40000 },
+            { id: 29, name: "Trà Sữa Việt Quất Đảo", category: "Trái Cây", price: 40000 },
+            { id: 30, name: "Trà Sữa Chanh Dây Nhiệt Đới", category: "Trái Cây", price: 38000 }
+        ];
+
+        let cart = [];
+
+        function renderProducts(filter = 'all') {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            let filtered = filter === 'all' ? databaseProducts : databaseProducts.filter(p => p.category === filter);
+            
+            filtered.forEach(product => {
+                grid.innerHTML += `
+                    <div class="product-card">
+                        <div>
+                            <h3>${product.name}</h3>
+                            <div class="price">${product.price.toLocaleString()} đ</div>
+                        </div>
+                        <button onclick="addToCart(${product.id})">+ Thêm vào giỏ</button>
+                    </div>
+                `;
+            });
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderProducts(cat);
+        }
+
+        function addToCart(id) {
+            const product = databaseProducts.find(p => p.id === id);
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            renderCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            const totalBox = document.getElementById('totalPrice');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="color: var(--gray); text-align: center; font-size: 14px;">Chưa có sản phẩm nào trong giỏ.</p>';
+                totalBox.innerText = '0 đ';
+                return;
+            }
+
+            container.innerHTML = '';
+            let total = 0;
+            cart.forEach(item => {
+                total += item.price * item.quantity;
+                container.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.name} x${item.quantity}</span>
+                        <span><b>${(item.price * item.quantity).toLocaleString()} đ</b> <button onclick="removeFromCart(${item.id})">✕</button></span>
+                    </div>
+                `;
+            });
+            totalBox.innerText = total.toLocaleString() + ' đ';
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Giỏ hàng của bạn đang trống!');
+                return;
+            }
+            alert('Đặt hàng thành công! Cảm ơn bạn đã mua trà sữa tại Cloud Store.');
+            cart = [];
+            renderCart();
+        }
+
+        function openDatabaseModal() {
+            const tbody = document.getElementById('dbTableBody');
+            tbody.innerHTML = '';
+            databaseProducts.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.name}</td>
+                        <td>${p.category}</td>
+                        <td>${p.price.toLocaleString()} VNĐ</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('dbModal').style.display = 'flex';
+        }
+
+        function closeDatabaseModal() {
+            document.getElementById('dbModal').style.display = 'none';
+        }
+
+        // Khởi chạy khi tải trang
+        renderProducts();
+    </script>
+</body>
+</html>
